@@ -1,0 +1,10 @@
+{
+  "name": "cvresume-workspace",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "dev:backend": "/bin/zsh -lc 'source \"$HOME/.sdkman/bin/sdkman-init.sh\" && sdk env && mvn -f backend/pom.xml spring-boot:run'",
+    "build:backend": "/bin/zsh -lc 'source \"$HOME/.sdkman/bin/sdkman-init.sh\" && sdk env && mvn -q -f backend/pom.xml -DskipTests compile'"
+  }
+}

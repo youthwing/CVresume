@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: crseume-backend
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/crseume?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:000018}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  threads:
+    virtual:
+      enabled: true
+  mail:
+    host: ${MAIL_HOST:smtp.qq.com}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          ssl:
+            enable: ${MAIL_SSL_ENABLE:true}
+          starttls:
+            enable: ${MAIL_STARTTLS_ENABLE:false}
+server:
+  port: 8080
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+app:
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
+  cors:
+    allowed-origin-patterns: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,http://14.103.166.76,https://14.103.166.76}
+  auth:
+    code-expire-minutes: ${AUTH_CODE_EXPIRE_MINUTES:10}
+    code-resend-interval-seconds: ${AUTH_CODE_RESEND_INTERVAL_SECONDS:60}
+    mail:
+      from-address: ${AUTH_MAIL_FROM:${MAIL_USERNAME:}}
+      from-name: ${AUTH_MAIL_FROM_NAME:CVResume 简历救兵}
+  llm:
+    enabled: ${LLM_ENABLED:true}
+    api-key: ${DASHSCOPE_API_KEY:}
+    base-url: ${DASHSCOPE_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    model: ${DASHSCOPE_MODEL:qwen-plus}

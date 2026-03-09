@@ -1,0 +1,32 @@
+{
+  "common": {
+    "appName": "CVResume",
+    "appNameFull": "CVResume",
+    "create": "Create Resume",
+    "pricing": "Pricing",
+    "login": "Login",
+    "logout": "Logout",
+    "theme": "Toggle theme",
+    "credits": "Credits"
+  },
+  "marketplace": {
+    "title": "Resume Gallery",
+    "subtitle": "Browse resume cases shared by other CVResume users",
+    "badge": "This resume has been privacy masked"
+  },
+  "create": {
+    "title": "CVResume",
+    "subtitle": "Generate a resume that aligns much more closely with the target role",
+    "steps1": "Deep JD Analysis",
+    "steps2": "Smart Rewriting",
+    "steps3": "HR Review"
+  },
+  "pricing": {
+    "title": "Pro Pricing",
+    "subtitle": "One pro plan only. Redeem credits on demand and stay focused on interviews."
+  },
+  "login": {
+    "title": "Login",
+    "subtitle": "Sign in to unlock CVResume generation"
+  }
+}

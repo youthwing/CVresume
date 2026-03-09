@@ -1,0 +1,14 @@
+.DS_Store
+.idea/
+.vscode/
+.codex-snapshots/
+*.log
+
+frontend/node_modules/
+frontend/.next/
+frontend/.next-prod/
+frontend/.env.local
+frontend/.env.production
+frontend/tsconfig.tsbuildinfo
+
+backend/target/

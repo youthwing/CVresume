@@ -1,0 +1,32 @@
+{
+  "common": {
+    "appName": "简历救兵",
+    "appNameFull": "简历救兵 CVResume",
+    "create": "创建简历",
+    "pricing": "定价",
+    "login": "登录",
+    "logout": "退出登录",
+    "theme": "切换主题",
+    "credits": "剩余额度"
+  },
+  "marketplace": {
+    "title": "简历广场",
+    "subtitle": "浏览其他用户分享的简历救兵案例",
+    "badge": "该简历已进行隐私脱敏处理"
+  },
+  "create": {
+    "title": "简历救兵",
+    "subtitle": "基于目标 JD，为你生成更贴近岗位需求的高质量简历",
+    "steps1": "JD深度解析",
+    "steps2": "智能定制",
+    "steps3": "HR视角审核"
+  },
+  "pricing": {
+    "title": "专业版定价",
+    "subtitle": "当前仅提供专业版，按需兑换次数，专注求职结果。"
+  },
+  "login": {
+    "title": "登录",
+    "subtitle": "登录后即可使用简历救兵智能生成简历"
+  }
+}
