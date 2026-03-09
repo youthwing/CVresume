@@ -124,3 +124,9 @@ Recommended reverse proxy pattern:
 
 - [../README.md](../README.md)
 - [../frontend/README.md](../frontend/README.md)
+
+## License | 开源协议
+
+Licensed under the Apache License 2.0. See [../LICENSE](../LICENSE).
+
+本模块随仓库整体采用 `Apache License 2.0`。

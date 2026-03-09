@@ -109,3 +109,9 @@ NEXT_PUBLIC_API_BASE_URL=/api
 
 - [../README.md](../README.md)
 - [../backend/README.md](../backend/README.md)
+
+## License | 开源协议
+
+Licensed under the Apache License 2.0. See [../LICENSE](../LICENSE).
+
+本模块随仓库整体采用 `Apache License 2.0`。

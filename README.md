@@ -4,7 +4,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-6DB33F?logo=springboot&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-21-E76F00?logo=openjdk&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
-![License](https://img.shields.io/badge/License-Pending-lightgrey)
+![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
 
 > AI-powered resume generation platform with bilingual UX, credits, marketplace, admin operations, and self-hosted deployment support.
 >
@@ -183,16 +183,16 @@ DASHSCOPE_API_KEY=your_dashscope_api_key
 - Add a real online payment integration when a business payment account is available
 - Continue normalizing persistence from in-memory orchestration to repository-driven data access
 - Improve automated testing coverage for core commerce and generation flows
-- Add a formal open-source license and contribution workflow
+- Improve contribution guidelines and release documentation
 
 ## Contributing | 贡献方式
 
-Issues and pull requests are welcome after the repository structure and license are finalized.
+Issues and pull requests are welcome.
 
-在补充正式开源协议和贡献规范后，欢迎继续通过 Issue 和 Pull Request 参与改进。
+欢迎通过 Issue 和 Pull Request 参与改进。
 
 ## License | 开源协议
 
-This repository does not include a final open-source license yet. Until a license file is added, please treat the code as source-visible rather than freely reusable.
+This project is licensed under the Apache License 2.0. See the [`LICENSE`](LICENSE) file for the full text.
 
-当前仓库暂未附带最终版开源协议。在补充 `LICENSE` 文件前，请将其视为“源码可见”，而不是默认可自由复用的开源许可项目。
+本项目采用 `Apache License 2.0` 开源协议，完整条款见 [`LICENSE`](LICENSE)。
