@@ -148,6 +148,15 @@ Recommended production topology:
 - `Spring Boot` runs on `127.0.0.1:8080`
 - Browser requests `/api/*` through the same domain
 
+For a small mainland China ECS, the fastest and most stable path is usually:
+
+- Build the frontend standalone bundle on your local machine
+- Package the backend JAR on your local machine
+- Upload the ready-to-run artifacts to the server
+- Let Baota `Nginx` reverse-proxy to the Node and Java processes
+
+That avoids long `docker pull`, `docker build`, and GitHub connectivity issues on the server.
+
 For a full Baota-friendly setup, see:
 
 - [frontend/README.md](frontend/README.md)

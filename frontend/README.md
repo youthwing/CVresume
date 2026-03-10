@@ -70,7 +70,9 @@ Default URL: `http://localhost:3000`
 ```bash
 npm run dev
 npm run build
+npm run build:standalone
 npm run start
+npm run start:standalone
 ```
 
 ## Build Notes | 构建说明
@@ -104,6 +106,26 @@ If your server has very limited memory, you can build with:
 
 ```bash
 SKIP_BUILD_VALIDATION=true NODE_OPTIONS="--max-old-space-size=1024" npm run build
+```
+
+For the most stable China-friendly deployment flow, build a standalone bundle on your local machine and upload it to the server:
+
+```bash
+NEXT_PUBLIC_API_BASE_URL=/api \
+SKIP_BUILD_VALIDATION=true \
+npm run build:standalone
+```
+
+Then upload these paths to the server:
+
+- `.next/standalone`
+- `.next/static`
+- `public` if present
+
+And run:
+
+```bash
+PORT=3000 HOSTNAME=127.0.0.1 node .next/standalone/server.js
 ```
 
 ### Docker

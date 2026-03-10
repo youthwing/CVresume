@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "build:standalone": "NEXT_OUTPUT_MODE=standalone next build",
+    "start": "next start",
+    "start:standalone": "node .next/standalone/server.js"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.1",
