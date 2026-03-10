@@ -2,9 +2,9 @@
 
 ## Overview | 概览
 
-This frontend is a `Next.js 14` application built with the App Router. It provides the landing pages, auth screens, resume workspace, commerce pages, marketplace, and admin dashboard for `CVResume`.
+This frontend is a `Next.js 14` App Router application for landing pages, authentication, resume editing, packages, marketplace, and admin screens.
 
-本前端基于 `Next.js 14 App Router`，覆盖首页、登录注册、简历工作台、支付与积分页面、共享市场和后台管理页面。
+本前端基于 `Next.js 14 App Router`，覆盖首页、登录注册、简历编辑、积分套餐、共享市场和管理后台页面。
 
 ## Stack | 技术栈
 
@@ -15,26 +15,18 @@ This frontend is a `Next.js 14` application built with the App Router. It provid
 - `next-intl`
 - `next-themes`
 - `axios`
-- `lucide-react`
-
-## Key Features | 关键功能
-
-- `Bilingual routing / 双语路由`：Locale-based routes under `app/[locale]`
-- `Resume workflow / 简历工作流`：Create, edit, preview, polish, and export resume content
-- `Commerce UI / 商业化界面`：Pricing, packages, redemption, orders, and manual QR payment dialogs
-- `Marketplace / 共享市场`：Browse and manage shared resumes
-- `Admin console / 管理后台`：Users, orders, products, and redemption code operations
 
 ## Directory Map | 目录结构
 
 ```text
 frontend/
 ├── app/                     # App Router pages and layouts
-├── components/              # UI components, providers, and feature sections
-├── i18n/                    # next-intl request configuration
-├── lib/                     # API client, templates, helpers, and shared types
+├── components/              # UI and feature components
+├── i18n/                    # Locale configuration
+├── lib/                     # API client and shared helpers
 ├── messages/                # Translation JSON files
-├── static/                  # Static assets such as payment QR images
+├── public/                  # Public assets such as favicon
+├── static/                  # Product images and payment QR assets
 └── package.json
 ```
 
@@ -42,17 +34,19 @@ frontend/
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `NEXT_PUBLIC_API_BASE_URL` | Yes | Base URL for the backend API. Use `http://localhost:8080/api` locally and `/api` in production behind Nginx. |
+| `NEXT_PUBLIC_API_BASE_URL` | Yes | Local default is `http://localhost:8080/api`; production should use `/api` |
 
 Examples:
 
 ```bash
-# local
+# local development
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api
 
 # production behind reverse proxy
 NEXT_PUBLIC_API_BASE_URL=/api
 ```
+
+The client also guards against accidental public-host deployments that still bundle a loopback API URL. On non-localhost hosts it will fall back to same-origin `/api`.
 
 ## Local Development | 本地开发
 
@@ -65,7 +59,7 @@ npm run dev
 
 Default URL: `http://localhost:3000`
 
-## Available Scripts | 可用脚本
+## Scripts | 脚本
 
 ```bash
 npm run dev
@@ -79,38 +73,20 @@ npm run start:standalone
 
 ## Build Notes | 构建说明
 
-- `NEXT_PUBLIC_*` variables are compiled into the production bundle.
-- Set `.env.production` before running `npm run build`.
-- If the Next.js dev server starts reporting missing chunk files under `.next/`, remove `frontend/.next` and restart the dev server.
-- On low-memory servers, you can temporarily skip lint and TypeScript validation with `SKIP_BUILD_VALIDATION=true npm run build`.
+- `NEXT_PUBLIC_*` values are compiled into the bundle
+- `bundle:standalone` copies `.next/static` and `public` into `.next/standalone`
+- `public/favicon.ico` is the canonical site icon asset
+- If `.next` becomes stale, remove it and restart the dev server
 
 ## Production Deployment | 生产部署
 
 Recommended runtime:
 
 - `next start --hostname 127.0.0.1 --port 3000`
-- Reverse proxy public traffic through `Nginx`
-- Proxy `/api/*` to the backend service
+- Public traffic handled by `Nginx`
+- `/api/*` proxied to the backend
 
-Sample production env file:
-
-```bash
-cp .env.production.example .env.production
-```
-
-Then set:
-
-```bash
-NEXT_PUBLIC_API_BASE_URL=/api
-```
-
-If your server has very limited memory, you can build with:
-
-```bash
-SKIP_BUILD_VALIDATION=true NODE_OPTIONS="--max-old-space-size=1024" npm run build
-```
-
-For the most stable China-friendly deployment flow, build a standalone bundle on your local machine and upload it to the server:
+Standalone build:
 
 ```bash
 NEXT_PUBLIC_API_BASE_URL=/api \
@@ -118,19 +94,17 @@ SKIP_BUILD_VALIDATION=true \
 npm run bundle:standalone
 ```
 
-`bundle:standalone` copies `.next/static` and `public` into the standalone runtime directory, so you only need to upload:
+Upload:
 
 - `.next/standalone`
 
-And run:
+Run:
 
 ```bash
 PORT=3000 HOSTNAME=127.0.0.1 node .next/standalone/server.js
 ```
 
-### Docker
-
-The frontend can also be built and run through Docker:
+## Docker | 容器化
 
 ```bash
 docker build \
@@ -140,25 +114,7 @@ docker build \
   -t cvresume-frontend ./frontend
 ```
 
-For mainland China servers, swap `NODE_IMAGE` to:
-
-```bash
---build-arg NODE_IMAGE=m.daocloud.io/docker.io/library/node:22-bookworm-slim
-```
-
-## UI Notes | 界面说明
-
-- Payment currently uses manual Alipay and WeChat QR code confirmation
-- Theme switching is hydration-safe in SSR mode
-- Locale switching is handled by `next-intl`
-
 ## Related Docs | 相关文档
 
 - [../README.md](../README.md)
 - [../backend/README.md](../backend/README.md)
-
-## License | 开源协议
-
-Licensed under the Apache License 2.0. See [../LICENSE](../LICENSE).
-
-本模块随仓库整体采用 `Apache License 2.0`。

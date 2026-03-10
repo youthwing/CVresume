@@ -4,7 +4,7 @@ spring:
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/crseume?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
     username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:000018}
+    password: ${MYSQL_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
   threads:
     virtual:
@@ -32,13 +32,24 @@ management:
 app:
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
   cors:
-    allowed-origin-patterns: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,http://14.103.166.76,https://14.103.166.76}
+    allowed-origin-patterns: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*}
   auth:
     code-expire-minutes: ${AUTH_CODE_EXPIRE_MINUTES:10}
     code-resend-interval-seconds: ${AUTH_CODE_RESEND_INTERVAL_SECONDS:60}
     mail:
       from-address: ${AUTH_MAIL_FROM:${MAIL_USERNAME:}}
       from-name: ${AUTH_MAIL_FROM_NAME:CVResume 简历救兵}
+  seed-users:
+    enabled: ${APP_SEED_USERS_ENABLED:false}
+    demo:
+      email: ${APP_DEMO_USER_EMAIL:demo@crseume.local}
+      password: ${APP_DEMO_USER_PASSWORD:}
+    showcase:
+      email: ${APP_SHOWCASE_USER_EMAIL:seed@crseume.local}
+      password: ${APP_SHOWCASE_USER_PASSWORD:}
+    admin:
+      email: ${APP_ADMIN_USER_EMAIL:admin@crseume.local}
+      password: ${APP_ADMIN_PASSWORD:}
   llm:
     enabled: ${LLM_ENABLED:true}
     api-key: ${DASHSCOPE_API_KEY:}

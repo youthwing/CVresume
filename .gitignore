@@ -3,6 +3,7 @@
 .vscode/
 .codex-snapshots/
 *.log
+*.tar.gz
 .env
 
 frontend/node_modules/

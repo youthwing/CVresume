@@ -44,6 +44,20 @@ public class AuthService {
     private long codeExpireMinutes;
     @Value("${app.auth.code-resend-interval-seconds:60}")
     private long codeResendIntervalSeconds;
+    @Value("${app.seed-users.enabled:false}")
+    private boolean seedUsersEnabled;
+    @Value("${app.seed-users.demo.email:demo@crseume.local}")
+    private String demoUserEmail;
+    @Value("${app.seed-users.demo.password:}")
+    private String demoUserPassword;
+    @Value("${app.seed-users.showcase.email:seed@crseume.local}")
+    private String showcaseUserEmail;
+    @Value("${app.seed-users.showcase.password:}")
+    private String showcaseUserPassword;
+    @Value("${app.seed-users.admin.email:admin@crseume.local}")
+    private String adminUserEmail;
+    @Value("${app.seed-users.admin.password:}")
+    private String adminUserPassword;
 
     public AuthService(InMemoryStore store,
                        PasswordEncoder passwordEncoder,
@@ -55,9 +69,26 @@ public class AuthService {
 
     @PostConstruct
     void init() {
-        ensureSeedUser("demo@crseume.local", "demo123456", "陈晨", "5年+前端工程师，擅长 React / Vue / 工程化优化", "zh", 180);
-        ensureSeedUser("seed@crseume.local", "seed123456", "顾问账号", "用于生成示例广场内容", "zh", 880);
-        ensureSeedUser("admin@crseume.local", "admin123456", "系统管理员", "负责积分、用户和兑换码运营", "zh", 5000, ROLE_ADMIN, true);
+        if (!seedUsersEnabled) {
+            return;
+        }
+        ensureSeedUserIfConfigured(demoUserEmail, demoUserPassword, "陈晨", "5年+前端工程师，擅长 React / Vue / 工程化优化", "zh", 180, ROLE_USER, false);
+        ensureSeedUserIfConfigured(showcaseUserEmail, showcaseUserPassword, "顾问账号", "用于生成示例广场内容", "zh", 880, ROLE_USER, false);
+        ensureSeedUserIfConfigured(adminUserEmail, adminUserPassword, "系统管理员", "负责积分、用户和兑换码运营", "zh", 5000, ROLE_ADMIN, true);
+    }
+
+    private void ensureSeedUserIfConfigured(String email,
+                                            String rawPassword,
+                                            String displayName,
+                                            String headline,
+                                            String locale,
+                                            int credits,
+                                            String role,
+                                            boolean proMember) {
+        if (!StringUtils.hasText(email) || !StringUtils.hasText(rawPassword)) {
+            return;
+        }
+        ensureSeedUser(email, rawPassword, displayName, headline, locale, credits, role, proMember);
     }
 
     public synchronized StateModels.UserAccount ensureSeedUser(String email,

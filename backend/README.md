@@ -2,9 +2,9 @@
 
 ## Overview | 概览
 
-The backend is a `Spring Boot 3` API service responsible for authentication, commerce, project/job orchestration, admin operations, chat/feedback support, and MySQL persistence.
+The backend is a `Spring Boot 3` API service for authentication, resume/project orchestration, commerce, admin operations, feedback, chat history, and MySQL persistence.
 
-后端基于 `Spring Boot 3`，负责认证、积分与订单、项目与任务编排、后台运营、反馈与聊天支持，以及 MySQL 持久化。
+后端基于 `Spring Boot 3`，负责认证、项目与任务编排、积分与订单、后台运营、反馈与聊天记录，以及 MySQL 持久化。
 
 ## Stack | 技术栈
 
@@ -18,73 +18,61 @@ The backend is a `Spring Boot 3` API service responsible for authentication, com
 
 ## Module Map | 模块说明
 
-- `api/`：REST controllers for auth, commerce, projects, admin, and support flows
-- `service/`：Core business orchestration and persistence
-- `security/`：Bearer token auth filter and authenticated principal
-- `domain/`：API DTOs and internal state models
-- `config/`：Security, CORS, and runtime configuration wiring
-
-## API Domains | API 分组
-
-- `Auth / 认证`：email code sending, login, register, profile, invitations, mocked OAuth
-- `Commerce / 商业化`：credits, packages, orders, redemption products, redemption codes
-- `Projects / 项目`：project CRUD, async generation jobs, resume result editing, sharing
-- `Admin / 管理后台`：dashboard, users, products, orders, custom code generation
-- `Support / 支持能力`：feedback, chat sessions, chat history
-
-## Persistence Model | 持久化模型
-
-The current implementation uses a multi-table MySQL schema. Core tables include:
-
-- `users`
-- `session_tokens`
-- `verification_codes`
-- `oauth_providers`
-- `oauth_states`
-- `credit_packages`
-- `redemption_products`
-- `credit_ledger_entries`
-- `projects`
-- `jobs`
-- `shared_resumes`
-- `orders`
-- `redemption_codes`
-- `feedback_entries`
-- `chat_sessions`
-- `chat_messages`
-
-This replaced the earlier single-table JSON blob approach, while the service layer still keeps an in-memory orchestration style for simplicity.
-
-当前版本已经从单表 JSON blob 持久化切换为 MySQL 多表结构，但服务层仍保留以内存对象编排为主的实现方式，以控制改动范围。
+- `api/`：REST controllers
+- `service/`：business orchestration and persistence
+- `security/`：bearer token auth
+- `domain/`：DTOs and state models
+- `config/`：security and runtime wiring
 
 ## Environment Variables | 环境变量
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `MYSQL_URL` | Yes | JDBC URL for MySQL |
+| `MYSQL_URL` | Yes | JDBC URL |
 | `MYSQL_USERNAME` | Yes | MySQL username |
 | `MYSQL_PASSWORD` | Yes | MySQL password |
-| `FRONTEND_BASE_URL` | Recommended | Public frontend URL used by auth-related links |
-| `APP_CORS_ALLOWED_ORIGIN_PATTERNS` | Recommended | Comma-separated allowed origin patterns for browser access |
-| `MAIL_HOST` | Optional | SMTP host, default `smtp.qq.com` |
-| `MAIL_PORT` | Optional | SMTP port, default `465` |
+| `FRONTEND_BASE_URL` | Recommended | Public frontend URL |
+| `APP_CORS_ALLOWED_ORIGIN_PATTERNS` | Recommended | Comma-separated allowed origins |
+| `MAIL_HOST` | Optional | SMTP host |
+| `MAIL_PORT` | Optional | SMTP port |
 | `MAIL_USERNAME` | Optional | SMTP username |
-| `MAIL_PASSWORD` | Optional | SMTP password or QQ SMTP authorization code |
+| `MAIL_PASSWORD` | Optional | SMTP password / authorization code |
 | `AUTH_MAIL_FROM` | Optional | Sender address |
-| `AUTH_MAIL_FROM_NAME` | Optional | Sender display name |
+| `AUTH_MAIL_FROM_NAME` | Optional | Sender name |
 | `DASHSCOPE_API_KEY` | Optional | LLM API key |
-| `DASHSCOPE_BASE_URL` | Optional | Compatible API base URL |
-| `DASHSCOPE_MODEL` | Optional | Model name, default `qwen-plus` |
+| `DASHSCOPE_BASE_URL` | Optional | Compatible LLM base URL |
+| `DASHSCOPE_MODEL` | Optional | Model name |
+| `APP_SEED_USERS_ENABLED` | Optional | Enable local/demo seed users |
+| `APP_DEMO_USER_EMAIL` | Optional | Demo user email |
+| `APP_DEMO_USER_PASSWORD` | Optional | Demo user password |
+| `APP_SHOWCASE_USER_EMAIL` | Optional | Showcase user email |
+| `APP_SHOWCASE_USER_PASSWORD` | Optional | Showcase user password |
+| `APP_ADMIN_USER_EMAIL` | Optional | Admin user email |
+| `APP_ADMIN_PASSWORD` | Optional | Admin user password |
 
 ## Local Development | 本地开发
+
+Start the backend with explicit local credentials:
 
 ```bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk env
+
+MYSQL_URL='jdbc:mysql://127.0.0.1:3306/crseume?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true' \
+MYSQL_USERNAME='root' \
+MYSQL_PASSWORD='your_local_mysql_password' \
+APP_CORS_ALLOWED_ORIGIN_PATTERNS='http://localhost:3000,http://127.0.0.1:3000' \
 mvn -f backend/pom.xml spring-boot:run
 ```
 
-Default server URL: `http://localhost:8080`
+Enable demo accounts only when needed:
+
+```bash
+APP_SEED_USERS_ENABLED='true' \
+APP_DEMO_USER_PASSWORD='<set_demo_password>' \
+APP_SHOWCASE_USER_PASSWORD='<set_showcase_password>' \
+APP_ADMIN_PASSWORD='<set_admin_password>'
+```
 
 Compile check:
 
@@ -92,7 +80,7 @@ Compile check:
 mvn -q -f backend/pom.xml -DskipTests compile
 ```
 
-Package for production:
+Package:
 
 ```bash
 mvn -q -f backend/pom.xml -DskipTests package
@@ -100,29 +88,28 @@ mvn -q -f backend/pom.xml -DskipTests package
 
 ## Operational Notes | 运维说明
 
-- `CORS` is configurable through `APP_CORS_ALLOWED_ORIGIN_PATTERNS`
+- No production credentials are committed in `application.yml`
+- Seed users are disabled by default
+- Regular users still require email verification codes when logging in
+- Admin users can log in with email and password only
 - Actuator exposes `health` and `info`
-- Mail health can report `DOWN` if SMTP credentials are not configured
-- The application expects MySQL to be reachable before startup in production
 
 ## Production Runtime | 生产运行
 
-Typical start command:
+Typical command:
 
 ```bash
 java -jar backend/target/crseume-backend-0.0.1-SNAPSHOT.jar --server.port=8080
 ```
 
-Recommended reverse proxy pattern:
+Recommended reverse proxy:
 
 - Public domain served by `Nginx`
 - Backend bound to `127.0.0.1:8080`
 - Frontend bound to `127.0.0.1:3000`
 - `/api/*` proxied to the backend
 
-### Docker
-
-The backend can be containerized directly:
+## Docker | 容器化
 
 ```bash
 docker build \
@@ -131,24 +118,7 @@ docker build \
   -t cvresume-backend ./backend
 ```
 
-For mainland China servers, you can switch the base images to:
-
-```bash
---build-arg MAVEN_IMAGE=m.daocloud.io/docker.io/library/maven:3.9.9-eclipse-temurin-21 \
---build-arg JAVA_IMAGE=m.daocloud.io/docker.io/library/eclipse-temurin:21-jre-jammy
-```
-
-The root `docker-compose.yml` already wires the backend to MySQL and frontend with environment-variable based configuration.
-
-If you already have MySQL installed on the host, the repository also includes `docker-compose.external-db.yml` so the backend container can use host networking and connect to `127.0.0.1:3306` instead of starting a MySQL container.
-
 ## Related Docs | 相关文档
 
 - [../README.md](../README.md)
 - [../frontend/README.md](../frontend/README.md)
-
-## License | 开源协议
-
-Licensed under the Apache License 2.0. See [../LICENSE](../LICENSE).
-
-本模块随仓库整体采用 `Apache License 2.0`。

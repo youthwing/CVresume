@@ -30,7 +30,39 @@ import type {
   UserProfile
 } from "@/lib/types";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080/api";
+const LOCAL_API_HOSTS = new Set(["localhost", "127.0.0.1"]);
+const LOCAL_API_BASE_URL = "http://localhost:8080/api";
+
+function resolveApiBaseUrl() {
+  const envApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+
+  if (typeof window === "undefined") {
+    return envApiBaseUrl || LOCAL_API_BASE_URL;
+  }
+
+  if (!envApiBaseUrl) {
+    return "/api";
+  }
+
+  try {
+    const apiUrl = new URL(envApiBaseUrl, window.location.origin);
+    const isLoopbackBackend =
+      LOCAL_API_HOSTS.has(apiUrl.hostname) &&
+      (apiUrl.port === "" || apiUrl.port === "8080") &&
+      apiUrl.pathname.startsWith("/api");
+    const isRemoteSite = !LOCAL_API_HOSTS.has(window.location.hostname);
+
+    if (isLoopbackBackend && isRemoteSite) {
+      return "/api";
+    }
+  } catch {
+    return envApiBaseUrl;
+  }
+
+  return envApiBaseUrl;
+}
+
+const apiBaseUrl = resolveApiBaseUrl();
 
 const instance = axios.create({
   baseURL: apiBaseUrl,
