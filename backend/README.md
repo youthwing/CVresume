@@ -140,7 +140,7 @@ For mainland China servers, you can switch the base images to:
 
 The root `docker-compose.yml` already wires the backend to MySQL and frontend with environment-variable based configuration.
 
-If you already have MySQL installed on the host, the repository also includes `docker-compose.external-db.yml` so the backend container can connect to `host.docker.internal:3306` instead of starting a MySQL container.
+If you already have MySQL installed on the host, the repository also includes `docker-compose.external-db.yml` so the backend container can use host networking and connect to `127.0.0.1:3306` instead of starting a MySQL container.
 
 ## Related Docs | 相关文档
 

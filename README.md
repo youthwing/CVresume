@@ -217,7 +217,7 @@ cp .env.docker.external-db.cn.example .env
 docker compose -f docker-compose.external-db.yml up -d --build
 ```
 
-这条路线完全绕开 `mysql:8.0` 镜像下载，后端容器会通过 `host.docker.internal:3306` 连接宿主机数据库。
+这条路线完全绕开 `mysql:8.0` 镜像下载，后端容器直接走宿主机网络并连接 `127.0.0.1:3306`，更适合宝塔里“仅本地访问”的 MySQL。
 
 Production frontend env example:
 

@@ -8,14 +8,14 @@ services:
         JAVA_IMAGE: ${JAVA_IMAGE:-eclipse-temurin:21-jre-jammy}
     container_name: cvresume-backend
     restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    network_mode: host
     environment:
-      MYSQL_URL: ${MYSQL_URL:-jdbc:mysql://host.docker.internal:3306/crseume?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+      MYSQL_URL: ${MYSQL_URL:-jdbc:mysql://127.0.0.1:3306/crseume?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
       MYSQL_USERNAME: ${MYSQL_USERNAME:-crseume_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change_this_user_password}
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:3000}
       APP_CORS_ALLOWED_ORIGIN_PATTERNS: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:-http://localhost:3000,http://127.0.0.1:3000}
+      SERVER_ADDRESS: 127.0.0.1
       MAIL_HOST: ${MAIL_HOST:-smtp.qq.com}
       MAIL_PORT: ${MAIL_PORT:-465}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
@@ -29,9 +29,6 @@ services:
       DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
       DASHSCOPE_MODEL: ${DASHSCOPE_MODEL:-qwen-plus}
       LLM_ENABLED: ${LLM_ENABLED:-true}
-    ports:
-      - "127.0.0.1:8080:8080"
-
   frontend:
     build:
       context: ./frontend
