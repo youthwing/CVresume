@@ -12,7 +12,7 @@ import {Input} from "@/components/ui/input";
 import {creditApi, redemptionApi} from "@/lib/api";
 import {formatPrice} from "@/lib/utils";
 import {toast} from "sonner";
-import type {CreditSummary, RedemptionProductView} from "@/lib/types";
+import type {CreditSummary, OrderView, RedemptionProductView} from "@/lib/types";
 
 function sectionText(locale: string, zh: string, en: string) {
   return locale === "en" ? en : zh;
@@ -58,6 +58,11 @@ export default function PackagesPage() {
     }
 
     setSelectedProduct(buildCustomProduct(credits, locale));
+  }
+
+  function handleOrderSubmitted(_order: OrderView) {
+    setSelectedProduct(null);
+    router.push(`/${locale}/orders`);
   }
 
   const customCreditsValue = Number(customCredits);
@@ -203,7 +208,12 @@ export default function PackagesPage() {
       </div>
 
       {selectedProduct && (
-        <ManualPaymentDialog locale={locale} onClose={() => setSelectedProduct(null)} product={selectedProduct} />
+        <ManualPaymentDialog
+          locale={locale}
+          onClose={() => setSelectedProduct(null)}
+          onSubmitted={handleOrderSubmitted}
+          product={selectedProduct}
+        />
       )}
     </main>
   );

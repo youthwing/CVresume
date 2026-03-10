@@ -100,6 +100,14 @@ public final class ApiModels {
                             int credits,
                             boolean grantsPro,
                             String status,
+                            String paymentMethod,
+                            String payerName,
+                            String payerAccount,
+                            String paymentReference,
+                            String paymentNote,
+                            String reviewNote,
+                            Instant reviewedAt,
+                            Instant fulfilledAt,
                             String redemptionCodeId,
                             Instant createdAt) {
     }
@@ -278,7 +286,13 @@ public final class ApiModels {
     public record CreateSharedResumeRequest(String jobId) {
     }
 
-    public record CreateOrderRequest(String productType) {
+    public record CreateOrderRequest(String productId,
+                                     Integer customCredits,
+                                     String paymentMethod,
+                                     String payerName,
+                                     String payerAccount,
+                                     String paymentReference,
+                                     String note) {
     }
 
     public record RedeemRequest(String code) {
@@ -316,6 +330,7 @@ public final class ApiModels {
     public record AdminOrderView(String id,
                                  String userId,
                                  String userEmail,
+                                 String userDisplayName,
                                  String productId,
                                  String productType,
                                  String title,
@@ -323,8 +338,21 @@ public final class ApiModels {
                                  int credits,
                                  boolean grantsPro,
                                  String status,
+                                 String paymentMethod,
+                                 String payerName,
+                                 String payerAccount,
+                                 String paymentReference,
+                                 String paymentNote,
+                                 String reviewNote,
+                                 String reviewedByUserId,
+                                 String reviewedByEmail,
+                                 Instant reviewedAt,
+                                 Instant fulfilledAt,
                                  String redemptionCodeId,
                                  Instant createdAt) {
+    }
+
+    public record AdminReviewOrderRequest(String note) {
     }
 
     public record AdminRedemptionCodeView(String id,

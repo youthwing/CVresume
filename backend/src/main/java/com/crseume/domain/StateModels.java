@@ -110,6 +110,15 @@ public final class StateModels {
         public int credits;
         public boolean grantsPro;
         public String status;
+        public String paymentMethod;
+        public String payerName;
+        public String payerAccount;
+        public String paymentReference;
+        public String paymentNote;
+        public String reviewNote;
+        public String reviewedByUserId;
+        public Instant reviewedAt;
+        public Instant fulfilledAt;
         public String redemptionCodeId;
         public Instant createdAt;
     }

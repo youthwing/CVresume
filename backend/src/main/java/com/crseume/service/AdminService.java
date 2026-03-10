@@ -20,6 +20,7 @@ public class AdminService {
     private static final int CREDITS_PER_GENERATION = 10;
     private static final int MAX_GENERATE_CODE_COUNT = 500;
     private static final int MAX_GENERATION_COUNT = 1000;
+    private static final String ORDER_STATUS_PENDING_REVIEW = "PENDING_REVIEW";
 
     private final InMemoryStore store;
     private final AuthService authService;
@@ -183,6 +184,57 @@ public class AdminService {
         return page(orders, page, size);
     }
 
+    public synchronized ApiModels.AdminOrderView approveOrder(AuthUser authUser,
+                                                              String orderId,
+                                                              ApiModels.AdminReviewOrderRequest request) {
+        StateModels.UserAccount reviewer = authService.requireAdmin(authUser);
+        StateModels.OrderState order = requireReviewableOrder(orderId);
+        String note = normalizeOptionalText(request != null ? request.note() : null);
+        Instant now = Instant.now();
+
+        order.status = "APPROVED";
+        order.reviewNote = note;
+        order.reviewedByUserId = reviewer.id;
+        order.reviewedAt = now;
+        order.fulfilledAt = now;
+
+        if (order.credits > 0) {
+            authService.adjustCredits(
+                order.userId,
+                order.credits,
+                "ORDER",
+                "人工支付到账",
+                "订单 " + order.id + " 审核通过，已发放 " + order.credits + " 积分"
+            );
+        }
+        if (order.grantsPro) {
+            authService.activateProMembership(
+                order.userId,
+                "人工支付开通专业版",
+                "订单 " + order.id + " 审核通过，已开通专业版"
+            );
+        }
+        store.persist();
+        return toAdminOrderView(order);
+    }
+
+    public synchronized ApiModels.AdminOrderView rejectOrder(AuthUser authUser,
+                                                             String orderId,
+                                                             ApiModels.AdminReviewOrderRequest request) {
+        StateModels.UserAccount reviewer = authService.requireAdmin(authUser);
+        StateModels.OrderState order = requireReviewableOrder(orderId);
+        order.status = "REJECTED";
+        order.reviewNote = normalizeOptionalText(request != null ? request.note() : null);
+        if (!StringUtils.hasText(order.reviewNote)) {
+            order.reviewNote = "未通过人工核验，请补充付款凭据后重新提交";
+        }
+        order.reviewedByUserId = reviewer.id;
+        order.reviewedAt = Instant.now();
+        order.fulfilledAt = null;
+        store.persist();
+        return toAdminOrderView(order);
+    }
+
     public synchronized ApiModels.PageResponse<ApiModels.AdminRedemptionCodeView> codes(AuthUser authUser, int page, int size) {
         authService.requireAdmin(authUser);
         List<ApiModels.AdminRedemptionCodeView> codes = store.redemptionCodes.values().stream()
@@ -238,6 +290,22 @@ public class AdminService {
             .filter(item -> item.id.equals(productId))
             .findFirst()
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "商品不存在"));
+    }
+
+    private StateModels.OrderState requireOrder(String orderId) {
+        StateModels.OrderState order = store.orders.get(orderId);
+        if (order == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "订单不存在");
+        }
+        return order;
+    }
+
+    private StateModels.OrderState requireReviewableOrder(String orderId) {
+        StateModels.OrderState order = requireOrder(orderId);
+        if (!ORDER_STATUS_PENDING_REVIEW.equals(order.status)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "当前订单不处于待审核状态");
+        }
+        return order;
     }
 
     private int validateGenerateCodeCount(int count) {
@@ -315,6 +383,10 @@ public class AdminService {
         return value.trim();
     }
 
+    private String normalizeOptionalText(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
     private ApiModels.AdminUserView toAdminUserView(StateModels.UserAccount user) {
         return new ApiModels.AdminUserView(
             user.id,
@@ -346,10 +418,12 @@ public class AdminService {
 
     private ApiModels.AdminOrderView toAdminOrderView(StateModels.OrderState order) {
         StateModels.UserAccount user = store.usersById.get(order.userId);
+        StateModels.UserAccount reviewer = StringUtils.hasText(order.reviewedByUserId) ? store.usersById.get(order.reviewedByUserId) : null;
         return new ApiModels.AdminOrderView(
             order.id,
             order.userId,
             user != null ? user.email : "",
+            user != null ? user.displayName : "",
             order.productId,
             order.productType,
             order.title,
@@ -357,6 +431,16 @@ public class AdminService {
             order.credits,
             order.grantsPro,
             order.status,
+            order.paymentMethod,
+            order.payerName,
+            order.payerAccount,
+            order.paymentReference,
+            order.paymentNote,
+            order.reviewNote,
+            order.reviewedByUserId,
+            reviewer != null ? reviewer.email : "",
+            order.reviewedAt,
+            order.fulfilledAt,
             order.redemptionCodeId,
             order.createdAt
         );

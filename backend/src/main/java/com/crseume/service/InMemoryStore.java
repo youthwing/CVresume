@@ -282,6 +282,15 @@ public class InMemoryStore {
               INDEX idx_orders_created_at (created_at)
             ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
             """);
+        ensureColumnExists("orders", "payment_method", "payment_method VARCHAR(32) NULL");
+        ensureColumnExists("orders", "payer_name", "payer_name VARCHAR(255) NULL");
+        ensureColumnExists("orders", "payer_account", "payer_account VARCHAR(255) NULL");
+        ensureColumnExists("orders", "payment_reference", "payment_reference VARCHAR(255) NULL");
+        ensureColumnExists("orders", "payment_note", "payment_note TEXT NULL");
+        ensureColumnExists("orders", "review_note", "review_note TEXT NULL");
+        ensureColumnExists("orders", "reviewed_by_user_id", "reviewed_by_user_id VARCHAR(64) NULL");
+        ensureColumnExists("orders", "reviewed_at", "reviewed_at TIMESTAMP NULL");
+        ensureColumnExists("orders", "fulfilled_at", "fulfilled_at TIMESTAMP NULL");
 
         jdbcTemplate.execute("""
             CREATE TABLE IF NOT EXISTS redemption_codes (
@@ -403,6 +412,22 @@ public class InMemoryStore {
     private boolean tableHasRows(String tableName) {
         Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + tableName, Integer.class);
         return count != null && count > 0;
+    }
+
+    private void ensureColumnExists(String tableName, String columnName, String definition) {
+        Integer count = jdbcTemplate.queryForObject(
+            """
+                SELECT COUNT(*)
+                FROM information_schema.columns
+                WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?
+                """,
+            Integer.class,
+            tableName,
+            columnName
+        );
+        if (count == null || count == 0) {
+            jdbcTemplate.execute("ALTER TABLE " + tableName + " ADD COLUMN " + definition);
+        }
     }
 
     private boolean legacyStateTableExists() {
@@ -622,7 +647,8 @@ public class InMemoryStore {
     private void loadOrders() {
         jdbcTemplate.query("""
             SELECT id, user_id, product_id, product_type, title, amount_cent, credits, grants_pro, status,
-                   redemption_code_id, created_at
+                   payment_method, payer_name, payer_account, payment_reference, payment_note, review_note,
+                   reviewed_by_user_id, reviewed_at, fulfilled_at, redemption_code_id, created_at
             FROM orders
             """, resultSet -> {
             StateModels.OrderState state = new StateModels.OrderState();
@@ -635,6 +661,15 @@ public class InMemoryStore {
             state.credits = resultSet.getInt("credits");
             state.grantsPro = resultSet.getBoolean("grants_pro");
             state.status = resultSet.getString("status");
+            state.paymentMethod = resultSet.getString("payment_method");
+            state.payerName = resultSet.getString("payer_name");
+            state.payerAccount = resultSet.getString("payer_account");
+            state.paymentReference = resultSet.getString("payment_reference");
+            state.paymentNote = resultSet.getString("payment_note");
+            state.reviewNote = resultSet.getString("review_note");
+            state.reviewedByUserId = resultSet.getString("reviewed_by_user_id");
+            state.reviewedAt = toInstant(resultSet, "reviewed_at");
+            state.fulfilledAt = toInstant(resultSet, "fulfilled_at");
             state.redemptionCodeId = resultSet.getString("redemption_code_id");
             state.createdAt = toInstant(resultSet, "created_at");
             orders.put(state.id, state);
@@ -926,8 +961,9 @@ public class InMemoryStore {
             jdbcTemplate.update("""
                 INSERT INTO orders (
                   id, user_id, product_id, product_type, title, amount_cent, credits, grants_pro, status,
-                  redemption_code_id, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  payment_method, payer_name, payer_account, payment_reference, payment_note, review_note,
+                  reviewed_by_user_id, reviewed_at, fulfilled_at, redemption_code_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 state.id,
                 state.userId,
@@ -938,6 +974,15 @@ public class InMemoryStore {
                 state.credits,
                 state.grantsPro,
                 defaultString(state.status),
+                nullableString(state.paymentMethod),
+                nullableString(state.payerName),
+                nullableString(state.payerAccount),
+                nullableString(state.paymentReference),
+                nullableString(state.paymentNote),
+                nullableString(state.reviewNote),
+                nullableString(state.reviewedByUserId),
+                toTimestamp(state.reviewedAt),
+                toTimestamp(state.fulfilledAt),
                 nullableString(state.redemptionCodeId),
                 toTimestamp(state.createdAt)
             );

@@ -109,6 +109,14 @@ export interface OrderView {
   credits: number;
   grantsPro: boolean;
   status: string;
+  paymentMethod: string | null;
+  payerName: string | null;
+  payerAccount: string | null;
+  paymentReference: string | null;
+  paymentNote: string | null;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  fulfilledAt: string | null;
   redemptionCodeId: string | null;
   createdAt: string;
 }
@@ -304,6 +312,7 @@ export interface AdminOrderView {
   id: string;
   userId: string;
   userEmail: string;
+  userDisplayName: string;
   productId: string;
   productType: string;
   title: string;
@@ -311,6 +320,16 @@ export interface AdminOrderView {
   credits: number;
   grantsPro: boolean;
   status: string;
+  paymentMethod: string | null;
+  payerName: string | null;
+  payerAccount: string | null;
+  paymentReference: string | null;
+  paymentNote: string | null;
+  reviewNote: string | null;
+  reviewedByUserId: string | null;
+  reviewedByEmail: string;
+  reviewedAt: string | null;
+  fulfilledAt: string | null;
   redemptionCodeId: string | null;
   createdAt: string;
 }

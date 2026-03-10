@@ -2,11 +2,15 @@
 
 import {useEffect, useState} from "react";
 import Image from "next/image";
-import {CheckCircle2, X} from "lucide-react";
+import {LoaderCircle, X} from "lucide-react";
+import {toast} from "sonner";
+import {orderApi} from "@/lib/api";
+import type {OrderView, RedemptionProductView} from "@/lib/types";
+import {formatCnyPrice} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
 import {Card} from "@/components/ui/card";
-import {formatCnyPrice} from "@/lib/utils";
-import type {RedemptionProductView} from "@/lib/types";
+import {Input} from "@/components/ui/input";
+import {Textarea} from "@/components/ui/textarea";
 import alipayQrCode from "@/static/img/alipay.jpg";
 import wechatQrCode from "@/static/img/wxpay.jpg";
 
@@ -18,14 +22,19 @@ interface ManualPaymentDialogProps {
   locale: string;
   product: RedemptionProductView;
   onClose: () => void;
+  onSubmitted: (order: OrderView) => void;
 }
 
 type PaymentMethod = "alipay" | "wechat";
 
-export function ManualPaymentDialog({locale, product, onClose}: ManualPaymentDialogProps) {
+export function ManualPaymentDialog({locale, product, onClose, onSubmitted}: ManualPaymentDialogProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("alipay");
   const [confirmedMethod, setConfirmedMethod] = useState<PaymentMethod>("alipay");
-  const [confirmed, setConfirmed] = useState(false);
+  const [payerName, setPayerName] = useState("");
+  const [payerAccount, setPayerAccount] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [paymentNote, setPaymentNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -66,16 +75,44 @@ export function ManualPaymentDialog({locale, product, onClose}: ManualPaymentDia
   const activeMethod = paymentMethods[selectedMethod];
   const actualMethod = paymentMethods[confirmedMethod];
   const paymentAmount = formatCnyPrice(product.priceCent);
+  const isCustomProduct = product.id.startsWith("custom-points-");
   const selectedMethodTone = selectedMethod === "alipay"
     ? "border-sky-200 bg-sky-50 text-sky-700"
     : "border-emerald-200 bg-emerald-50 text-emerald-700";
+  const canSubmit = payerName.trim().length > 0 && (payerAccount.trim().length > 0 || paymentReference.trim().length > 0);
+
+  async function handleSubmit() {
+    if (!canSubmit || submitting) {
+      toast.error(sectionText(locale, "请填写付款人，并补充支付账号或交易单号。", "Enter the payer name and either an account hint or transaction reference."));
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const {data} = await orderApi.create({
+        productId: isCustomProduct ? undefined : product.id,
+        customCredits: isCustomProduct ? product.credits : undefined,
+        paymentMethod: confirmedMethod === "alipay" ? "ALIPAY" : "WECHAT",
+        payerName: payerName.trim(),
+        payerAccount: payerAccount.trim() || undefined,
+        paymentReference: paymentReference.trim() || undefined,
+        note: paymentNote.trim() || undefined
+      });
+      toast.success(sectionText(locale, "订单已提交，等待管理员审核到账。", "Order submitted. It is now waiting for manual review."));
+      onSubmitted(data);
+    } catch (error) {
+      toast.error(getErrorMessage(error, sectionText(locale, "提交订单失败", "Failed to submit order")));
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 p-4 sm:p-6" onClick={onClose}>
       <Card
         aria-labelledby="manual-payment-title"
         aria-modal="true"
-        className="mx-auto my-4 w-full max-w-3xl overflow-hidden rounded-[28px] border-none bg-white shadow-[0_28px_80px_rgba(15,23,42,0.35)]"
+        className="mx-auto my-4 w-full max-w-4xl overflow-hidden rounded-[28px] border-none bg-white shadow-[0_28px_80px_rgba(15,23,42,0.35)]"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >
@@ -92,7 +129,7 @@ export function ManualPaymentDialog({locale, product, onClose}: ManualPaymentDia
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-xl">
               <div className="text-xs font-semibold uppercase tracking-[0.28em] text-blue-100/80">
-                {sectionText(locale, "扫码支付", "Scan to pay")}
+                {sectionText(locale, "人工支付", "Manual payment")}
               </div>
               <h2 id="manual-payment-title" className="mt-2 text-2xl font-black tracking-[-0.04em] sm:text-3xl">
                 {product.name}
@@ -100,8 +137,8 @@ export function ManualPaymentDialog({locale, product, onClose}: ManualPaymentDia
               <p className="mt-2 text-sm leading-6 text-blue-50/90">
                 {sectionText(
                   locale,
-                  "选择微信或支付宝后扫码付款，完成后确认你实际使用的付款方式。",
-                  "Choose Alipay or WeChat Pay, pay by QR code, then confirm the method you actually used."
+                  "扫码付款后提交付款人和交易信息，系统会生成待审核订单，管理员确认后再发放积分或开通权益。",
+                  "After paying by QR code, submit the payer and transaction details. The system will create a pending order for admin review."
                 )}
               </p>
             </div>
@@ -130,10 +167,7 @@ export function ManualPaymentDialog({locale, product, onClose}: ManualPaymentDia
                         ? "rounded-[20px] border border-slate-900 bg-slate-900 px-4 py-4 text-left text-white shadow-[0_16px_32px_rgba(15,23,42,0.16)]"
                         : "rounded-[20px] border border-slate-200 bg-white px-4 py-4 text-left text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"}
                       key={method}
-                      onClick={() => {
-                        setSelectedMethod(method);
-                        setConfirmed(false);
-                      }}
+                      onClick={() => setSelectedMethod(method)}
                       type="button"
                     >
                       <div className={active ? "text-xs font-semibold uppercase tracking-[0.24em] text-slate-300" : "text-xs font-semibold uppercase tracking-[0.24em] text-slate-400"}>
@@ -177,19 +211,19 @@ export function ManualPaymentDialog({locale, product, onClose}: ManualPaymentDia
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <div className="text-lg font-semibold text-slate-900">
-                      {sectionText(locale, "支付完成后确认付款方式", "Confirm your payment method")}
+                      {sectionText(locale, "填写人工审核信息", "Fill in review details")}
                     </div>
                     <div className="mt-1 text-sm leading-6 text-slate-500">
                       {sectionText(
                         locale,
-                        "如果中途切换过二维码，这里按最后实际付款的方式选择即可。",
-                        "If you switched QR codes, just choose the final method you actually used."
+                        "管理员会根据这里的信息核对收款记录。至少填写付款人，并补充支付账号或交易单号中的一项。",
+                        "Admins will use this information to match the payment record. Provide the payer name plus either an account hint or a transaction reference."
                       )}
                     </div>
                   </div>
 
                   <div className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600">
-                    {sectionText(locale, "当前确认", "Current selection")}: {actualMethod.label}
+                    {sectionText(locale, "实际付款方式", "Actual method")}: {actualMethod.label}
                   </div>
                 </div>
 
@@ -204,14 +238,11 @@ export function ManualPaymentDialog({locale, product, onClose}: ManualPaymentDia
                           ? "rounded-[20px] border border-emerald-400 bg-white px-4 py-4 text-left shadow-[0_12px_28px_rgba(16,185,129,0.12)]"
                           : "rounded-[20px] border border-slate-200 bg-white px-4 py-4 text-left transition hover:border-slate-300"}
                         key={method}
-                        onClick={() => {
-                          setConfirmedMethod(method);
-                          setConfirmed(false);
-                        }}
+                        onClick={() => setConfirmedMethod(method)}
                         type="button"
                       >
                         <div className={active ? "text-xs font-semibold uppercase tracking-[0.24em] text-emerald-600" : "text-xs font-semibold uppercase tracking-[0.24em] text-slate-400"}>
-                          {sectionText(locale, "实际付款方式", "Actual payment method")}
+                          {sectionText(locale, "最终实际付款方式", "Final payment method")}
                         </div>
                         <div className="mt-2 text-base font-bold text-slate-900">{item.label}</div>
                         <div className="mt-1 text-sm text-slate-500">{item.caption}</div>
@@ -220,36 +251,47 @@ export function ManualPaymentDialog({locale, product, onClose}: ManualPaymentDia
                   })}
                 </div>
 
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <Input
+                    value={payerName}
+                    onChange={(event) => setPayerName(event.target.value)}
+                    placeholder={sectionText(locale, "付款人姓名/昵称", "Payer name or nickname")}
+                  />
+                  <Input
+                    value={payerAccount}
+                    onChange={(event) => setPayerAccount(event.target.value)}
+                    placeholder={sectionText(locale, "支付账号/尾号（选填）", "Payment account hint / last digits")}
+                  />
+                  <Input
+                    value={paymentReference}
+                    onChange={(event) => setPaymentReference(event.target.value)}
+                    className="sm:col-span-2"
+                    placeholder={sectionText(locale, "交易单号、付款备注或付款时间（选填但建议填写）", "Transaction reference, remark, or payment time")}
+                  />
+                  <Textarea
+                    value={paymentNote}
+                    onChange={(event) => setPaymentNote(event.target.value)}
+                    className="sm:col-span-2"
+                    placeholder={sectionText(locale, "补充说明，例如付款截图关键字、订单备注等（选填）", "Extra notes such as screenshot hints or extra context")}
+                  />
+                </div>
+
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                  <Button className="flex-1" onClick={() => setConfirmed(true)}>
-                    {sectionText(locale, `我已通过${actualMethod.label}完成支付`, `I paid with ${actualMethod.label}`)}
+                  <Button className="flex-1" disabled={submitting} onClick={() => void handleSubmit()}>
+                    {submitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                    {sectionText(locale, `提交${actualMethod.label}付款审核`, `Submit ${actualMethod.label} payment for review`)}
                   </Button>
                   <Button className="flex-1" onClick={onClose} variant="outline">
                     {sectionText(locale, "稍后再付", "Pay later")}
                   </Button>
                 </div>
-
-                {confirmed && (
-                  <div className="mt-5 rounded-[20px] border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm leading-6 text-emerald-900">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
-                      <div>
-                        {sectionText(
-                          locale,
-                          `已记录你的付款方式：${actualMethod.label}。请保留付款截图，后续人工核对时会更快处理。`,
-                          `Recorded your payment method: ${actualMethod.label}. Keep your screenshot for faster manual verification.`
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="rounded-[20px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
                 {sectionText(
                   locale,
-                  "人工收款流程，请付款后保留截图，方便后续核对。",
-                  "This is a manual payment flow. Keep your payment screenshot for verification."
+                  "订单提交后可在“我的订单”查看审核状态。管理员通过后会直接给当前账号发放积分或开通权益。",
+                  "After submission, check the review result in My Orders. Once approved, credits or plan benefits are granted directly to your account."
                 )}
               </div>
 
@@ -264,4 +306,14 @@ export function ManualPaymentDialog({locale, product, onClose}: ManualPaymentDia
       </Card>
     </div>
   );
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (typeof error === "object" && error && "response" in error) {
+    const response = (error as {response?: {data?: {message?: string}}}).response;
+    if (response?.data?.message) {
+      return response.data.message;
+    }
+  }
+  return fallback;
 }

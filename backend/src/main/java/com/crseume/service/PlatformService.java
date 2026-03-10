@@ -43,6 +43,9 @@ public class PlatformService {
 
     private static final Logger log = LoggerFactory.getLogger(PlatformService.class);
     private static final int GENERATION_COST = 10;
+    private static final int MIN_CUSTOM_ORDER_CREDITS = 10;
+    private static final String ORDER_STATUS_PENDING_REVIEW = "PENDING_REVIEW";
+    private static final Set<String> MANUAL_PAYMENT_METHODS = Set.of("ALIPAY", "WECHAT");
 
     private static final List<String> DEFAULT_MODULES = List.of("教育经历", "专业技能", "工作经历", "项目经历", "个人评价");
     private static final List<String> KNOWN_KEYWORDS = List.of(
@@ -132,8 +135,8 @@ public class PlatformService {
 
     public synchronized ApiModels.OrderView createOrder(AuthUser authUser, ApiModels.CreateOrderRequest request) {
         StateModels.UserAccount user = authService.requireUser(authUser.userId());
-        StateModels.RedemptionProductState product = requireProduct(requiredText(request.productType(), "缺少 productType"));
-        StateModels.OrderState order = createPaidOrder(user.id, product);
+        StateModels.RedemptionProductState product = resolveOrderProduct(request);
+        StateModels.OrderState order = createManualOrder(user.id, product, request);
         store.persist();
         return toOrderView(order);
     }
@@ -154,7 +157,7 @@ public class PlatformService {
 
     public synchronized ApiModels.OrderView cancelOrder(AuthUser authUser, String orderId) {
         StateModels.OrderState order = requireOrderOwned(authUser.userId(), orderId);
-        if (!Objects.equals(order.status, "PENDING")) {
+        if (!Objects.equals(order.status, ORDER_STATUS_PENDING_REVIEW)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "当前订单不可取消");
         }
         order.status = "CANCELLED";
@@ -1522,6 +1525,71 @@ public class PlatformService {
         return order;
     }
 
+    private StateModels.OrderState createManualOrder(String userId,
+                                                     StateModels.RedemptionProductState product,
+                                                     ApiModels.CreateOrderRequest request) {
+        StateModels.OrderState order = new StateModels.OrderState();
+        order.id = IdGenerator.next("ord_");
+        order.userId = userId;
+        order.productId = product.id;
+        order.productType = product.productType;
+        order.title = product.name;
+        order.amountCent = product.priceCent;
+        order.credits = product.credits;
+        order.grantsPro = product.grantsPro;
+        order.status = ORDER_STATUS_PENDING_REVIEW;
+        order.paymentMethod = normalizePaymentMethod(request.paymentMethod());
+        order.payerName = requiredText(request.payerName(), "请输入付款人姓名或昵称");
+        order.payerAccount = nullableText(request.payerAccount());
+        order.paymentReference = nullableText(request.paymentReference());
+        if (!StringUtils.hasText(order.payerAccount) && !StringUtils.hasText(order.paymentReference)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "请至少填写支付账号或交易单号中的一项");
+        }
+        order.paymentNote = nullableText(request.note());
+        order.createdAt = Instant.now();
+        store.orders.put(order.id, order);
+        return order;
+    }
+
+    private StateModels.RedemptionProductState resolveOrderProduct(ApiModels.CreateOrderRequest request) {
+        if (StringUtils.hasText(request.productId())) {
+            return requireProduct(request.productId().trim());
+        }
+        if (request.customCredits() != null) {
+            return buildCustomOrderProduct(request.customCredits());
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "缺少商品信息");
+    }
+
+    private StateModels.RedemptionProductState buildCustomOrderProduct(int credits) {
+        if (credits < MIN_CUSTOM_ORDER_CREDITS || credits % GENERATION_COST != 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "自定义充值积分必须为 10 的倍数，且最低为 10");
+        }
+        StateModels.RedemptionProductState product = new StateModels.RedemptionProductState();
+        product.id = "custom-points-" + credits;
+        product.productType = "POINTS";
+        product.name = credits + " 积分自定义充值";
+        product.description = "按 1 RMB = 10 积分计算的人工支付订单";
+        product.credits = credits;
+        product.priceCent = credits * 10;
+        product.grantsPro = false;
+        product.recommended = false;
+        product.active = true;
+        return product;
+    }
+
+    private String normalizePaymentMethod(String paymentMethod) {
+        String value = requiredText(paymentMethod, "缺少 paymentMethod").toUpperCase(Locale.ROOT);
+        if (!MANUAL_PAYMENT_METHODS.contains(value)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "支付方式仅支持 ALIPAY 或 WECHAT");
+        }
+        return value;
+    }
+
+    private String nullableText(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
     private StateModels.RedemptionCodeState createRedemptionCode(StateModels.RedemptionProductState product,
                                                                  String purchasedByUserId,
                                                                  String orderId) {
@@ -1693,6 +1761,14 @@ public class PlatformService {
             order.credits,
             order.grantsPro,
             order.status,
+            order.paymentMethod,
+            order.payerName,
+            order.payerAccount,
+            order.paymentReference,
+            order.paymentNote,
+            order.reviewNote,
+            order.reviewedAt,
+            order.fulfilledAt,
             order.redemptionCodeId,
             order.createdAt
         );

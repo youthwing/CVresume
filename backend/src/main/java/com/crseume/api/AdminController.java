@@ -83,6 +83,20 @@ public class AdminController {
         return adminService.orders(authUser, page, size);
     }
 
+    @PostMapping("/orders/{orderId}/approve")
+    public ApiModels.AdminOrderView approveOrder(@AuthenticationPrincipal AuthUser authUser,
+                                                 @PathVariable String orderId,
+                                                 @RequestBody(required = false) ApiModels.AdminReviewOrderRequest request) {
+        return adminService.approveOrder(authUser, orderId, request);
+    }
+
+    @PostMapping("/orders/{orderId}/reject")
+    public ApiModels.AdminOrderView rejectOrder(@AuthenticationPrincipal AuthUser authUser,
+                                                @PathVariable String orderId,
+                                                @RequestBody(required = false) ApiModels.AdminReviewOrderRequest request) {
+        return adminService.rejectOrder(authUser, orderId, request);
+    }
+
     @GetMapping("/redemption-codes")
     public ApiModels.PageResponse<ApiModels.AdminRedemptionCodeView> codes(@AuthenticationPrincipal AuthUser authUser,
                                                                             @RequestParam(defaultValue = "0") int page,

@@ -141,7 +141,15 @@ export const creditApi = {
 };
 
 export const orderApi = {
-  create: (productType: string) => instance.post<OrderView>("/orders", {productType}),
+  create: (payload: {
+    productId?: string;
+    customCredits?: number;
+    paymentMethod: "ALIPAY" | "WECHAT";
+    payerName: string;
+    payerAccount?: string;
+    paymentReference?: string;
+    note?: string;
+  }) => instance.post<OrderView>("/orders", payload),
   list: (page = 0, size = 10) => instance.get<PageResponse<OrderView>>(`/orders?page=${page}&size=${size}`),
   get: (orderId: string) => instance.get<OrderView>(`/orders/${orderId}`),
   cancel: (orderId: string) => instance.post<OrderView>(`/orders/${orderId}/cancel`)
@@ -269,5 +277,9 @@ export const adminApi = {
   generateCustomCodes: (generationCount: number, count: number) =>
     instance.post<AdminGenerateCodesResponse>("/admin/redemption-codes/custom", {generationCount, count}),
   orders: (page = 0, size = 20) => instance.get<PageResponse<AdminOrderView>>(`/admin/orders?page=${page}&size=${size}`),
+  approveOrder: (orderId: string, note?: string) =>
+    instance.post<AdminOrderView>(`/admin/orders/${orderId}/approve`, {note}),
+  rejectOrder: (orderId: string, note?: string) =>
+    instance.post<AdminOrderView>(`/admin/orders/${orderId}/reject`, {note}),
   codes: (page = 0, size = 20) => instance.get<PageResponse<AdminRedemptionCodeView>>(`/admin/redemption-codes?page=${page}&size=${size}`)
 };
