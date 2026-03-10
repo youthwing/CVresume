@@ -5,6 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,6 +19,8 @@ import java.util.Locale;
 @Service
 public class VerificationMailService {
 
+    private static final Logger log = LoggerFactory.getLogger(VerificationMailService.class);
+
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Asia/Shanghai"));
 
@@ -24,6 +28,12 @@ public class VerificationMailService {
 
     @Value("${spring.mail.host:}")
     private String mailHost;
+
+    @Value("${spring.mail.username:}")
+    private String mailUsername;
+
+    @Value("${spring.mail.password:}")
+    private String mailPassword;
 
     @Value("${app.auth.mail.from-address:}")
     private String fromAddress;
@@ -36,7 +46,10 @@ public class VerificationMailService {
     }
 
     public void sendVerificationCode(String email, String code, String type, String locale, Instant expiresAt) {
-        if (!StringUtils.hasText(mailHost) || !StringUtils.hasText(fromAddress)) {
+        if (!StringUtils.hasText(mailHost)
+            || !StringUtils.hasText(mailUsername)
+            || !StringUtils.hasText(mailPassword)
+            || !StringUtils.hasText(fromAddress)) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "邮件服务未配置，请先配置 SMTP 参数");
         }
 
@@ -48,6 +61,13 @@ public class VerificationMailService {
         try {
             javaMailSender.send(message);
         } catch (MailException exception) {
+            log.error("Failed to send verification email via SMTP host={} username={} from={} to={}",
+                mailHost,
+                mailUsername,
+                fromAddress,
+                email,
+                exception
+            );
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "验证码邮件发送失败，请稍后重试");
         }
     }
