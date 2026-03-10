@@ -159,6 +159,7 @@ The repository now includes first-party Docker deployment files:
 
 - `docker-compose.yml`
 - `.env.docker.example`
+- `.env.docker.cn.example`
 - `frontend/Dockerfile`
 - `backend/Dockerfile`
 
@@ -186,7 +187,18 @@ MAVEN_IMAGE=m.daocloud.io/docker.io/library/maven:3.9.9-eclipse-temurin-21
 JAVA_IMAGE=m.daocloud.io/docker.io/library/eclipse-temurin:21-jre-jammy
 ```
 
+For servers in mainland China, you can start from the bundled mirror-aware template directly:
+
+```bash
+cp .env.docker.cn.example .env
+docker compose up -d --build
+```
+
+`m.daocloud.io` is preconfigured in that template so you do not need to keep experimenting with Docker daemon mirrors first.
+
 仓库现在已经内置了 Docker 部署文件。复制 `.env.docker.example` 为 `.env` 后，直接执行 `docker compose up -d --build` 即可启动数据库、后端和前端，再由宝塔 `Nginx` 做域名反向代理。
+
+如果你的服务器在中国大陆，优先直接使用 `.env.docker.cn.example`。这个模板已经把 MySQL、Node、Maven 和 Java 基础镜像切到 `m.daocloud.io`，比继续反复切换 `daemon.json` 里的公共镜像站更稳。
 
 Production frontend env example:
 

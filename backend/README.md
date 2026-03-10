@@ -131,6 +131,13 @@ docker build \
   -t cvresume-backend ./backend
 ```
 
+For mainland China servers, you can switch the base images to:
+
+```bash
+--build-arg MAVEN_IMAGE=m.daocloud.io/docker.io/library/maven:3.9.9-eclipse-temurin-21 \
+--build-arg JAVA_IMAGE=m.daocloud.io/docker.io/library/eclipse-temurin:21-jre-jammy
+```
+
 The root `docker-compose.yml` already wires the backend to MySQL and frontend with environment-variable based configuration.
 
 ## Related Docs | 相关文档

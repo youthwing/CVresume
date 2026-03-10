@@ -118,6 +118,12 @@ docker build \
   -t cvresume-frontend ./frontend
 ```
 
+For mainland China servers, swap `NODE_IMAGE` to:
+
+```bash
+--build-arg NODE_IMAGE=m.daocloud.io/docker.io/library/node:22-bookworm-slim
+```
+
 ## UI Notes | 界面说明
 
 - Payment currently uses manual Alipay and WeChat QR code confirmation
