@@ -78,6 +78,7 @@ npm run start
 - `NEXT_PUBLIC_*` variables are compiled into the production bundle.
 - Set `.env.production` before running `npm run build`.
 - If the Next.js dev server starts reporting missing chunk files under `.next/`, remove `frontend/.next` and restart the dev server.
+- On low-memory servers, you can temporarily skip lint and TypeScript validation with `SKIP_BUILD_VALIDATION=true npm run build`.
 
 ## Production Deployment | 生产部署
 
@@ -97,6 +98,12 @@ Then set:
 
 ```bash
 NEXT_PUBLIC_API_BASE_URL=/api
+```
+
+If your server has very limited memory, you can build with:
+
+```bash
+SKIP_BUILD_VALIDATION=true NODE_OPTIONS="--max-old-space-size=1024" npm run build
 ```
 
 ## UI Notes | 界面说明
