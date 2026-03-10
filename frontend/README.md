@@ -112,6 +112,7 @@ The frontend can also be built and run through Docker:
 
 ```bash
 docker build \
+  --build-arg NODE_IMAGE=node:22-bookworm-slim \
   --build-arg NEXT_PUBLIC_API_BASE_URL=/api \
   --build-arg SKIP_BUILD_VALIDATION=true \
   -t cvresume-frontend ./frontend

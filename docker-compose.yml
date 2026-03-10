@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: mysql:8.0
+    image: ${MYSQL_IMAGE:-mysql:8.0}
     container_name: cvresume-mysql
     restart: unless-stopped
     command:
@@ -24,6 +24,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        MAVEN_IMAGE: ${MAVEN_IMAGE:-maven:3.9.9-eclipse-temurin-21}
+        JAVA_IMAGE: ${JAVA_IMAGE:-eclipse-temurin:21-jre-jammy}
     container_name: cvresume-backend
     restart: unless-stopped
     depends_on:
@@ -56,6 +59,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-bookworm-slim}
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-/api}
         SKIP_BUILD_VALIDATION: ${SKIP_BUILD_VALIDATION:-true}
     container_name: cvresume-frontend

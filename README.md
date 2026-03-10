@@ -177,6 +177,15 @@ This starts:
 
 Then keep Baota `Nginx` as the public reverse proxy to `127.0.0.1:3000` and `127.0.0.1:8080`.
 
+If Docker Hub access is unstable, you can override the image sources in `.env`, for example:
+
+```bash
+MYSQL_IMAGE=m.daocloud.io/docker.io/library/mysql:8.0
+NODE_IMAGE=m.daocloud.io/docker.io/library/node:22-bookworm-slim
+MAVEN_IMAGE=m.daocloud.io/docker.io/library/maven:3.9.9-eclipse-temurin-21
+JAVA_IMAGE=m.daocloud.io/docker.io/library/eclipse-temurin:21-jre-jammy
+```
+
 仓库现在已经内置了 Docker 部署文件。复制 `.env.docker.example` 为 `.env` 后，直接执行 `docker compose up -d --build` 即可启动数据库、后端和前端，再由宝塔 `Nginx` 做域名反向代理。
 
 Production frontend env example:

@@ -125,7 +125,10 @@ Recommended reverse proxy pattern:
 The backend can be containerized directly:
 
 ```bash
-docker build -t cvresume-backend ./backend
+docker build \
+  --build-arg MAVEN_IMAGE=maven:3.9.9-eclipse-temurin-21 \
+  --build-arg JAVA_IMAGE=eclipse-temurin:21-jre-jammy \
+  -t cvresume-backend ./backend
 ```
 
 The root `docker-compose.yml` already wires the backend to MySQL and frontend with environment-variable based configuration.
