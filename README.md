@@ -158,6 +158,7 @@ For a full Baota-friendly setup, see:
 The repository now includes first-party Docker deployment files:
 
 - `docker-compose.yml`
+- `docker-compose.external-db.yml`
 - `.env.docker.example`
 - `.env.docker.cn.example`
 - `frontend/Dockerfile`
@@ -199,6 +200,24 @@ docker compose up -d --build
 仓库现在已经内置了 Docker 部署文件。复制 `.env.docker.example` 为 `.env` 后，直接执行 `docker compose up -d --build` 即可启动数据库、后端和前端，再由宝塔 `Nginx` 做域名反向代理。
 
 如果你的服务器在中国大陆，优先直接使用 `.env.docker.cn.example`。这个模板已经把 MySQL、Node、Maven 和 Java 基础镜像切到 `m.daocloud.io`，比继续反复切换 `daemon.json` 里的公共镜像站更稳。
+
+If MySQL image pulls remain slow, you can reuse an existing host MySQL instance and only run the frontend and backend in Docker:
+
+```bash
+cp .env.docker.external-db.cn.example .env
+docker compose -f docker-compose.external-db.yml up -d --build
+```
+
+That path avoids pulling `mysql:8.0` entirely and points the backend container at `host.docker.internal:3306`.
+
+如果 MySQL 镜像仍然拉取很慢，可以直接复用宿主机已有的 MySQL，只让 Docker 跑前后端：
+
+```bash
+cp .env.docker.external-db.cn.example .env
+docker compose -f docker-compose.external-db.yml up -d --build
+```
+
+这条路线完全绕开 `mysql:8.0` 镜像下载，后端容器会通过 `host.docker.internal:3306` 连接宿主机数据库。
 
 Production frontend env example:
 
