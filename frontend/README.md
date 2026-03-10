@@ -106,6 +106,17 @@ If your server has very limited memory, you can build with:
 SKIP_BUILD_VALIDATION=true NODE_OPTIONS="--max-old-space-size=1024" npm run build
 ```
 
+### Docker
+
+The frontend can also be built and run through Docker:
+
+```bash
+docker build \
+  --build-arg NEXT_PUBLIC_API_BASE_URL=/api \
+  --build-arg SKIP_BUILD_VALIDATION=true \
+  -t cvresume-frontend ./frontend
+```
+
 ## UI Notes | 界面说明
 
 - Payment currently uses manual Alipay and WeChat QR code confirmation

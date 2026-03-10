@@ -120,6 +120,16 @@ Recommended reverse proxy pattern:
 - Frontend bound to `127.0.0.1:3000`
 - `/api/*` proxied to the backend
 
+### Docker
+
+The backend can be containerized directly:
+
+```bash
+docker build -t cvresume-backend ./backend
+```
+
+The root `docker-compose.yml` already wires the backend to MySQL and frontend with environment-variable based configuration.
+
 ## Related Docs | 相关文档
 
 - [../README.md](../README.md)

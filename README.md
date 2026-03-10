@@ -153,6 +153,32 @@ For a full Baota-friendly setup, see:
 - [frontend/README.md](frontend/README.md)
 - [backend/README.md](backend/README.md)
 
+### Docker Compose
+
+The repository now includes first-party Docker deployment files:
+
+- `docker-compose.yml`
+- `.env.docker.example`
+- `frontend/Dockerfile`
+- `backend/Dockerfile`
+
+Quick start:
+
+```bash
+cp .env.docker.example .env
+docker compose up -d --build
+```
+
+This starts:
+
+- `mysql` on the internal Docker network
+- `backend` bound to `127.0.0.1:8080`
+- `frontend` bound to `127.0.0.1:3000`
+
+Then keep Baota `Nginx` as the public reverse proxy to `127.0.0.1:3000` and `127.0.0.1:8080`.
+
+仓库现在已经内置了 Docker 部署文件。复制 `.env.docker.example` 为 `.env` 后，直接执行 `docker compose up -d --build` 即可启动数据库、后端和前端，再由宝塔 `Nginx` 做域名反向代理。
+
 Production frontend env example:
 
 ```bash
