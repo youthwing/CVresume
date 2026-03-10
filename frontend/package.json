@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "build:standalone": "NEXT_OUTPUT_MODE=standalone next build",
+    "prepare:standalone": "mkdir -p .next/standalone/.next && rm -rf .next/standalone/.next/static && cp -R .next/static .next/standalone/.next/static && rm -rf .next/standalone/public && cp -R public .next/standalone/public",
+    "bundle:standalone": "npm run build:standalone && npm run prepare:standalone",
     "start": "next start",
     "start:standalone": "node .next/standalone/server.js"
   },

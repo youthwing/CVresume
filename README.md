@@ -157,6 +157,8 @@ For a small mainland China ECS, the fastest and most stable path is usually:
 
 That avoids long `docker pull`, `docker build`, and GitHub connectivity issues on the server.
 
+For Next.js standalone uploads, make sure the runtime directory contains both `.next/static` and `public`. The frontend now provides `npm run bundle:standalone` to prepare that directory in one step before you archive and upload it.
+
 For a full Baota-friendly setup, see:
 
 - [frontend/README.md](frontend/README.md)

@@ -71,6 +71,8 @@ Default URL: `http://localhost:3000`
 npm run dev
 npm run build
 npm run build:standalone
+npm run prepare:standalone
+npm run bundle:standalone
 npm run start
 npm run start:standalone
 ```
@@ -113,14 +115,12 @@ For the most stable China-friendly deployment flow, build a standalone bundle on
 ```bash
 NEXT_PUBLIC_API_BASE_URL=/api \
 SKIP_BUILD_VALIDATION=true \
-npm run build:standalone
+npm run bundle:standalone
 ```
 
-Then upload these paths to the server:
+`bundle:standalone` copies `.next/static` and `public` into the standalone runtime directory, so you only need to upload:
 
 - `.next/standalone`
-- `.next/static`
-- `public` if present
 
 And run:
 
