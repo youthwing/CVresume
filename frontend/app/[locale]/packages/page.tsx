@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {useEffect, useState} from "react";
 import {useLocale} from "next-intl";
 import {useRouter} from "next/navigation";
@@ -9,7 +10,7 @@ import {ManualPaymentDialog} from "@/components/sections/manual-payment-dialog";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
-import {creditApi, redemptionApi} from "@/lib/api";
+import {creditApi, orderApi, redemptionApi} from "@/lib/api";
 import {formatPrice} from "@/lib/utils";
 import {toast} from "sonner";
 import type {CreditSummary, OrderView, RedemptionProductView} from "@/lib/types";
@@ -18,12 +19,40 @@ function sectionText(locale: string, zh: string, en: string) {
   return locale === "en" ? en : zh;
 }
 
+function formatPaymentMethod(locale: string, method: string | null) {
+  if (method === "ALIPAY") {
+    return sectionText(locale, "支付宝", "Alipay");
+  }
+  if (method === "WECHAT") {
+    return sectionText(locale, "微信支付", "WeChat Pay");
+  }
+  return "-";
+}
+
+function formatOrderStatus(locale: string, status: string) {
+  switch (status) {
+    case "PENDING_REVIEW":
+      return sectionText(locale, "待人工审核", "Pending review");
+    case "APPROVED":
+      return sectionText(locale, "已通过", "Approved");
+    case "REJECTED":
+      return sectionText(locale, "已拒绝", "Rejected");
+    case "CANCELLED":
+      return sectionText(locale, "已取消", "Cancelled");
+    case "PAID":
+      return sectionText(locale, "已支付", "Paid");
+    default:
+      return status;
+  }
+}
+
 export default function PackagesPage() {
   const locale = useLocale();
   const router = useRouter();
   const {user, loading} = useAuth();
   const [summary, setSummary] = useState<CreditSummary | null>(null);
   const [products, setProducts] = useState<RedemptionProductView[]>([]);
+  const [recentOrders, setRecentOrders] = useState<OrderView[]>([]);
   const [loadingPage, setLoadingPage] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<RedemptionProductView | null>(null);
   const [customCredits, setCustomCredits] = useState("200");
@@ -37,10 +66,11 @@ export default function PackagesPage() {
       return;
     }
 
-    Promise.all([creditApi.get(), redemptionApi.products()])
-      .then(([summaryRes, productsRes]) => {
+    Promise.all([creditApi.get(), redemptionApi.products(), orderApi.list(0, 5)])
+      .then(([summaryRes, productsRes, ordersRes]) => {
         setSummary(summaryRes.data);
         setProducts(productsRes.data);
+        setRecentOrders(ordersRes.data.content);
       })
       .catch(() => toast.error(sectionText(locale, "积分商城加载失败", "Failed to load store")))
       .finally(() => setLoadingPage(false));
@@ -60,9 +90,9 @@ export default function PackagesPage() {
     setSelectedProduct(buildCustomProduct(credits, locale));
   }
 
-  function handleOrderSubmitted(_order: OrderView) {
+  function handleOrderSubmitted(order: OrderView) {
     setSelectedProduct(null);
-    router.push(`/${locale}/orders`);
+    setRecentOrders((current) => [order, ...current.filter((item) => item.id !== order.id)].slice(0, 5));
   }
 
   const customCreditsValue = Number(customCredits);
@@ -205,6 +235,55 @@ export default function PackagesPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="mt-8">
+        <Card>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>{sectionText(locale, "最近订单", "Recent orders")}</CardTitle>
+              <CardDescription>
+                {sectionText(locale, "你刚提交的人工支付订单会直接显示在这里，方便查看审核进度。", "Your latest manual-payment orders appear here so you can track review progress immediately.")}
+              </CardDescription>
+            </div>
+            <Button asChild variant="outline">
+              <Link href={`/${locale}/orders`}>{sectionText(locale, "查看全部订单", "View all orders")}</Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {recentOrders.length > 0 ? recentOrders.map((order) => (
+              <div key={order.id} className="rounded-2xl border border-slate-200 p-4 text-sm dark:border-slate-800">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="font-semibold text-slate-900 dark:text-white">{order.title}</div>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                        {formatOrderStatus(locale, order.status)}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-slate-500 dark:text-slate-400">
+                      {formatPaymentMethod(locale, order.paymentMethod)} · {order.credits} {sectionText(locale, "积分", "credits")}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-400">{order.id}</div>
+                    <div className="mt-2 grid gap-1 text-xs text-slate-500 dark:text-slate-400">
+                      <div>{sectionText(locale, "付款人", "Payer")}: {order.payerName ?? "-"}</div>
+                      <div>{sectionText(locale, "交易单号/备注", "Transaction reference")}: {order.paymentReference ?? "-"}</div>
+                      <div>{sectionText(locale, "审核备注", "Review note")}: {order.reviewNote ?? "-"}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold text-slate-900 dark:text-white">{formatPrice(order.amountCent, locale)}</div>
+                    <div className="mt-1 text-xs text-slate-400">{new Date(order.createdAt).toLocaleString(locale === "en" ? "en-US" : "zh-CN")}</div>
+                  </div>
+                </div>
+              </div>
+            )) : (
+              <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-5 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                {sectionText(locale, "还没有订单记录。支付并提交审核后，这里会立即显示。", "You do not have any orders yet. Once you submit a payment for review, it will appear here immediately.")}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {selectedProduct && (
